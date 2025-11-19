@@ -100,10 +100,26 @@ def joinFactors(factors: List[Factor]):
                     "Input factors: \n" +
                     "\n".join(map(str, factors)))
 
+    factors = list(factors)
 
-    "*** YOUR CODE HERE ***"
-    raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    unconditioned_vars = set()
+    conditioned_vars = set()
+
+    for factor in factors:
+        unconditioned_vars |= set(factor.unconditionedVariables())
+        conditioned_vars |= set(factor.conditionedVariables())
+
+    conditioned_vars -= unconditioned_vars
+    variableDomainsDict = factors[0].variableDomainsDict()
+    joinedFactor = Factor(unconditioned_vars, conditioned_vars, variableDomainsDict)
+
+    for assignment in joinedFactor.getAllPossibleAssignmentDicts():
+        prob = 1.0
+        for factor in factors:
+            prob *= factor.getProbability(assignment)
+        joinedFactor.setProbability(assignment, prob)
+
+    return joinedFactor
 
 ########### ########### ###########
 ########### QUESTION 3  ###########
@@ -152,9 +168,25 @@ def eliminateWithCallTracking(callTrackingList=None):
                     "eliminationVariable:" + str(eliminationVariable) + "\n" +\
                     "unconditionedVariables: " + str(factor.unconditionedVariables()))
 
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        newUncond = set(factor.unconditionedVariables())
+        newUncond.remove(eliminationVariable)
+
+        newCond = set(factor.conditionedVariables())
+
+        variableDomainsDict = factor.variableDomainsDict()
+        newFactor = Factor(newUncond, newCond, variableDomainsDict)
+
+        elimDomain = variableDomainsDict[eliminationVariable]
+
+        for assignment in newFactor.getAllPossibleAssignmentDicts():
+            totalProb = 0.0
+            for elimValue in elimDomain:
+                fullAssignment = assignment.copy()
+                fullAssignment[eliminationVariable] = elimValue
+                totalProb += factor.getProbability(fullAssignment)
+            newFactor.setProbability(assignment, totalProb)
+
+        return newFactor
 
     return eliminate
 
